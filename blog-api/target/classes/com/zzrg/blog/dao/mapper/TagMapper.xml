@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--MyBatis配置文件-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zzrg.blog.dao.mapper.TagMapper">
+    <sql id="all">
+        id,avatar,tag_name as tagName
+    </sql>
+    <!-- 因为tag和article有一张对应的表，所以要查询article对应的tag时，需要设计到多表的查询-->
+    <select id="findTagsByArticleId" parameterType="long" resultType="com.zzrg.blog.dao.pojo.Tag">
+        select id,avatar,tag_name as tagName from ms_tag
+        <where>
+            id in
+            (select tag_id from ms_article_tag where article_id =#{articleId})
+        </where>
+    </select>
+
+
+    <!--    List<Long> findHostTageId(int limit);-->
+    <!--    parameterType="int"是自己加的因为不会自动生成我们输入的标签,#{limit}为我们自己传的参数-->
+    <!--    GROUP by 用法  https://www.runoob.com/sql/sql-groupby.html-->
+    <!--    sql语句的意思是在ms_article_tag表中查找tag_id，根据tag_id将其聚合在一起，再根据count（*）的数量以递减的顺序排序最后限制输出两条数据-->
+    <select id="findHostTageId" parameterType="int" resultType="java.lang.Long">
+         select tag_id from ms_article_tag GROUP BY tag_id ORDER BY count(*) DESC LIMIT #{limit}
+    </select>
+
+<!--    List<Tag> findTagsByTagIds(List<Long> tagIds);-->
+<!--    相当于for循环找传进来的一个id集合，每个id通过sql语句找到对应的tag对象&ndash;&gt;-->
+    <select id="findTagsByTagIds" parameterType="list" resultType="com.zzrg.blog.dao.pojo.Tag">
+        select id,tag_name as tagName from ms_tag
+        where  id in
+        <foreach collection="tagIds" item="tagId" separator="," open="(" close=")">
+            #{tagId}
+        </foreach>
+    </select>
+</mapper>
